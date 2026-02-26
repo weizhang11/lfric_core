@@ -9,9 +9,12 @@
 # This macro is evaluated now (:= syntax) so it may be used as many times as
 # desired without wasting time rerunning it.
 #
-NVFORT_VERSION := $(shell nvfortran -V | awk '/^nvfortran +[0-9]+\.[0-9]+/ { split($$2, a, "[.-]"); printf "%03i%02i%02i\n", a[1],a[2],a[3] }')
+NVFORT_VERSION := $(shell ftn -V | awk '/^nvfortran +[0-9]+\.[0-9]+/ { split($$2, a, "[.-]"); printf "%03i%02i%02i\n", a[1],a[2],a[3] }')
+
 $(info ** Chosen Nvidia Fortran compiler version $(NVFORT_VERSION))
+
 ifeq ($(shell test $(NVFORT_VERSION) -lt 0241100; echo $$?), 0)
+#ifeq ($(shell test $(NVFORT_VERSION) -lt 241100; echo $$?), 0)
   $(error nvFort is too old to build LFRic. Must be at least 24.11)
 endif
 
@@ -20,8 +23,7 @@ F_MOD_DESTINATION_ARG = -module$(SPACE)
 FFLAGS_COMPILER           =
 FFLAGS_COMPILER          += -Mfree -Mpreprocess
 FFLAGS_NO_OPTIMISATION    = -O0
-FFLAGS_SAFE_OPTIMISATION  = -O0
- #-O2
+FFLAGS_SAFE_OPTIMISATION  = -O0 ##-O2
 FFLAGS_RISKY_OPTIMISATION = -O4
 FFLAGS_DEBUG              = -g -traceback
 FFLAGS_RUNTIME            =
@@ -44,5 +46,12 @@ else
 	LDFLAGS_OPENMP = -mp
 endif
 
-FPP = nvfortran -E
-FPPFLAGS = -P -D__NVCOMPILER
+#FPP = ftn -F
+#FPP = ftn -F -Mpreprocess
+#FPP = ftn -cpp -E -P
+#FPP = ftn -cpp -F
+#FPP = ftn -cpp -Mpreprocess
+
+FPP = ftn -E -Mfree -Mpreprocess 
+#-Mfree -Mpreprocess cpp -x f95-cpp-input
+FPPFLAGS = -P -D__NVCOMPILER -g -O0 -traceback -Mbounds -Mchkptr
